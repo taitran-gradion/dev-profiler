@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "name": "profiler",
+  "version": "0.1.0",
+  "risk_tiers": [],
+  "overlays": [
+    "cmd/api.sharedRedisClient",
+    "internal/compose.agentGate",
+    "internal/compose.chiRoutePattern",
+    "internal/compose.idempotency",
+    "internal/compose.operationHooks",
+    "internal/compose.refuseUnknownQueryEnum",
+    "internal/compose.runOperationHooks",
+    "internal/compose.runWriteHook",
+    "internal/modules/agents.(*Registry).InvokeServing",
+    "internal/modules/ai.(*Router).flush",
+    "internal/modules/identity.(Handlers).Middleware",
+    "internal/modules/webhooks.NewGuardedClient",
+    "internal/platform/certlog.guardedClient",
+    "internal/platform/database.PoolConfig",
+    "internal/platform/database/storekit.Emit",
+    "internal/platform/database/storekit.runWriteHook",
+    "internal/platform/httpserver.Correlate",
+    "internal/platform/httpserver.WithCorrelation",
+    "internal/platform/webread.newFetcher",
+    "internal/shared/kernel/principal.WithActor"
+  ]
+}

@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: BUSL-1.1
+# SPDX-FileCopyrightText: 2026 Gradion
+#
+# profiler's contract fragment: two reads over the requests this process
+# profiled. Each answers the caller's own requests only, so neither takes a
+# member argument, and neither is offered to an agent.
+overlay: 1.0.0
+info:
+  title: profiler
+  version: "0.1.0"
+actions:
+  - target: $.paths['/ext/profiler/requests']
+    update:
+      get:
+        operationId: profilerListRequests
+        summary: List the caller's most recent profiled requests.
+        tags: [Extensions]
+        x-agent-access:
+          access: human-only
+          verb: profiler_list_requests
+          version: 1.0.0
+          title: List profiled requests
+          description: >-
+            List the calling contact's most recent requests that this process
+            profiled, newest first, with each one's route, status, duration and
+            how many statements it ran.
+        responses:
+          '200':
+            description: The caller's profiled requests, newest first.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  additionalProperties: false
+                  required: [requests]
+                  properties:
+                    requests:
+                      type: array
+                      description: Empty when nothing was profiled, or when the profiler overlay is not compiled in.
+                      items:
+                        type: object
+                        additionalProperties: false
+                        required: [token, method, path, status, started_at, duration_ms, queries, sql_ms, writes, ai_calls, tool_calls, redis, http]
+                        properties:
+                          token: { type: string }
+                          method: { type: string }
+                          path: { type: string }
+                          route: { type: string }
+                          operation: { type: string }
+                          status: { type: integer }
+                          started_at: { type: string, format: date-time }
+                          duration_ms: { type: number }
+                          queries: { type: integer }
+                          sql_ms: { type: number }
+                          writes: { type: integer }
+                          ai_calls: { type: integer }
+                          tool_calls: { type: integer }
+                          redis: { type: integer }
+                          http: { type: integer }
+          '401': { $ref: '#/components/responses/Unauthorized' }
+          '403': { $ref: '#/components/responses/Forbidden' }
+
+  - target: $.paths['/ext/profiler/request']
+    update:
+      get:
+        operationId: profilerGetRequest
+        summary: Read one of the caller's profiled requests.
+        tags: [Extensions]
+        parameters:
+          - name: token
+            in: query
+            required: true
+            schema: { type: string }
+        x-agent-access:
+          access: human-only
+          verb: profiler_get_request
+          version: 1.0.0
+          title: Read a profiled request
+          description: >-
+            Read one profiled request of the calling contact by its token, the
+            X-Margince-Profile header of its response: every statement it ran
+            without its arguments, its audited writes, the extension hooks it
+            ran and its log lines.
+        responses:
+          '200':
+            description: The profile.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  additionalProperties: true
+          '401': { $ref: '#/components/responses/Unauthorized' }
+          '403': { $ref: '#/components/responses/Forbidden' }
+          '404': { $ref: '#/components/responses/NotFound' }
+
+  - target: $.paths['/ext/profiler/clear']
+    update:
+      post:
+        operationId: profilerClearRequests
+        summary: Forget the caller's profiled requests.
+        tags: [Extensions]
+        x-rbac-object: ext_profiler_requests
+        x-rbac-action: delete
+        x-agent-access:
+          access: human-only
+          verb: profiler_clear_requests
+          version: 1.0.0
+          title: Clear profiled requests
+          description: >-
+            Forget every profiled request of the calling contact that this
+            process still holds. Other members' requests are kept.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties: {}
+        responses:
+          '200':
+            description: How many requests were forgotten.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  additionalProperties: false
+                  required: [cleared]
+                  properties:
+                    cleared: { type: integer }
+          '401': { $ref: '#/components/responses/Unauthorized' }
+          '403': { $ref: '#/components/responses/Forbidden' }
